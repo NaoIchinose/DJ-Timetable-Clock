@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet"><title>DJブース時計</title>
+<style>
+:root{--bg:#000;--ink:#e9e6df;--dim:#6b6962;--ok:#ff3b30;--y:#f0cf4a;--o:#ff9a3c;--r:#ff4a4a;--line:#2a2926;
+box-sizing:border-box;color-scheme:dark;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;height:100%;background:radial-gradient(120% 70% at 50% 0%,#1c0a09 0%,#000 62%) fixed,var(--bg);color:var(--ink);font-family:"Montserrat","Zen Kaku Gothic New","Hiragino Sans","Noto Sans JP",system-ui,sans-serif;font-variant-numeric:tabular-nums;-webkit-user-select:none;user-select:none;overflow:hidden;touch-action:manipulation}
+#app{height:100%;display:flex;flex-direction:column;padding:2.5vmin 3.5vmin;gap:1.4vmin}
+#clock{position:relative;color:var(--ok);font-size:min(18vw,16vh);line-height:1;display:flex;justify-content:center;padding:2.4vh 0 1.8vh;border:1px solid #1d1a18;border-radius:14px;background:#070606}
+#clock::before{content:"NOW";position:absolute;top:8px;left:12px;font-size:11px;letter-spacing:.32em;color:var(--dim);font-weight:700}
+#top{display:flex;justify-content:space-between;gap:12px;font-size:11px;letter-spacing:.28em;color:var(--dim);font-weight:700;text-transform:uppercase}
+#top span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#dj{font-size:min(7vw,5.6vh);text-align:center;color:var(--ink);font-weight:700;letter-spacing:.06em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rem{font-size:min(24vw,25vh);line-height:1;text-align:center;flex:1;display:flex;align-items:center;justify-content:center;min-height:0;border-radius:14px;position:relative;border:1px solid #1d1a18;background:radial-gradient(ellipse at 50% 55%,rgba(255,59,48,.13),transparent 68%),#070606}
+#rem::before{content:"REMAINING";position:absolute;top:8px;left:12px;font-size:11px;letter-spacing:.32em;color:var(--dim);font-weight:700}
+#next{font-size:min(5vw,4.4vh);letter-spacing:.06em;text-align:center;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#banner{display:none;text-align:center;font-size:min(6vw,5vh);background:var(--r);color:#000;font-weight:700;padding:.6vmin;border-radius:6px}
+#bar{display:none;flex-wrap:wrap;gap:1.2vmin;opacity:.9}body.showbar #bar{display:flex}
+#bar button{flex:1 1 22%}
+button{font:inherit;font-size:min(3.8vw,3.2vh);font-weight:700;letter-spacing:.04em;background:rgba(255,255,255,.03);color:var(--ink);border:1px solid #2a2724;border-radius:999px;padding:1.4vmin .8vmin;min-height:48px}
+button:active{background:#26241f}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--y);outline-offset:2px}
+#wk,#hint{font-size:11px;color:var(--dim);text-align:center}body.showbar #hint{display:none}
+.s-ok{color:var(--ok)}.s-y{color:var(--y)}.s-o{color:var(--o)}.s-r{color:#000;background:var(--r)}.s-d{color:#9b2d27}
+.sg{display:inline-flex;align-items:center;gap:.05em;height:1em;font-weight:700}.sg svg{height:1em;flex:none;transform:skewX(-6deg)}.sg .t{font-size:.6em;padding:0 .2em}
+#rem.s-r{background:var(--r);color:#000}#rem.s-r::before{color:rgba(0,0,0,.6)}
+#pg{height:4px;background:#14110f;border-radius:2px;overflow:hidden}#pgi{display:block;height:100%;width:0;background:currentColor;transition:width .25s linear}#pgi.s-r{background:var(--r)}
+#meta{font-size:min(4vw,3.4vh);letter-spacing:.14em;text-align:center;color:var(--dim);font-weight:700;min-height:1.2em}
+@keyframes blink{50%{opacity:.15}}#rem.bk .sg{animation:blink .7s steps(2,end) infinite}
+.sg svg{filter:drop-shadow(0 0 .08em currentColor)}#rem.s-r .sg svg{filter:none}
+@media (orientation:landscape) and (min-width:760px){
+#app{display:grid;grid-template-columns:1.3fr .8fr;grid-template-rows:auto auto 1fr 1fr auto auto auto auto auto;column-gap:3vmin}
+#top{grid-column:1/-1;grid-row:1}#clock{grid-column:1/-1;grid-row:2}
+#rem{grid-column:1;grid-row:3/5}#meta{grid-column:1;grid-row:5}#pg{grid-column:1;grid-row:6}
+#dj{grid-column:2;grid-row:3;align-self:end;text-align:left;white-space:normal;overflow:visible;font-size:min(5.2vw,9vh);line-height:1.1}
+#dj::before{content:"NOW PLAYING";display:block;font-size:11px;letter-spacing:.32em;color:var(--dim);margin-bottom:1vh}
+#next{grid-column:2;grid-row:4;align-self:start;text-align:left;white-space:normal;font-size:min(3.4vw,6vh);padding-top:1.5vh}
+#banner{grid-column:1/-1;grid-row:7}#bar{grid-column:1/-1;grid-row:8}#wk{grid-column:1;grid-row:9;text-align:left}#hint{grid-column:2;grid-row:9;text-align:right}
+}
+#lock{position:fixed;inset:0;z-index:100;display:none;background:rgba(0,0,0,.001);touch-action:none}
+#lock .h{position:absolute;left:0;right:0;bottom:calc(6vh + env(safe-area-inset-bottom,0px));text-align:center;color:var(--dim);font-size:14px}
+#lock .p{position:absolute;left:0;bottom:0;height:4px;width:0;background:var(--y)}
+#ed{position:fixed;inset:0;z-index:50;background:#0b0a09;overflow:auto;display:none;padding:calc(12px + env(safe-area-inset-top,0px)) 14px calc(24px + env(safe-area-inset-bottom,0px));font-size:15px}
+#ed h2{font-size:17px;margin:18px 0 8px}
+#ed input,#ed select,#ed textarea{font:inherit;background:#161513;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px;min-height:40px;max-width:100%}
+#ed textarea{width:100%;height:150px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+#ed button{font-size:15px;padding:8px 12px;min-height:40px}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+.slot{border:1px solid var(--line);border-radius:8px;padding:8px;margin:6px 0}
+.slot input[type=text]{width:100%;margin-bottom:6px}
+.err{color:var(--r);white-space:pre-wrap;font-size:13px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="top"><span id="evn"></span><span id="dt"></span></div>
+  <div id="clock">--:--:--</div>
+  <div id="dj"></div>
+  <div id="rem"></div>
+  <div id="meta"></div>
+  <div id="pg"><i id="pgi"></i></div>
+  <div id="next"></div>
+  <div id="banner">次のDJ開始時刻です</div>
+  <div id="bar">
+    <button id="bPrev">前へ</button>
+    <button id="bNext">次へ</button>
+    <button id="bM">次枠−1分</button>
+    <button id="bP">次枠+1分</button>
+    <button id="bEd">編集・設定</button>
+    <button id="bLock">ロック</button>
+    <button id="bFs">全画面</button>
+  </div>
+  <div id="wk"></div>
+  <div id="hint">画面を3回タップでボタン表示</div>
+</div>
+<div id="lock"><div class="h">画面をロック中。長押し2秒で解除</div><div class="p" id="lp"></div></div>
+<div id="ed"></div>
+
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var KEY='djclock-v1';
+var S=null;
+function def(){return{evId:1,ev:[{id:1,name:'イベント1',cur:0,slots:[]}],set:{sec:true,w1:5,w2:1,vib:false}}}
+function load(){try{var t=localStorage.getItem(KEY);if(t){var o=JSON.parse(t);if(o&&o.ev&&o.ev.length&&o.set)return o}}catch(e){}return def()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+S=load();
+function cev(){for(var i=0;i<S.ev.length;i++)if(S.ev[i].id===S.evId)return S.ev[i];S.evId=S.ev[0].id;return S.ev[0]}
+function ms(s){return new Date(s).getTime()}
+function p2(n){return(n<10?'0':'')+n}
+function hm(t){var d=new Date(t);return p2(d.getHours())+':'+p2(d.getMinutes())}
+function toStr(t){var d=new Date(t);return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+'T'+p2(d.getHours())+':'+p2(d.getMinutes())}
+function dur(sec,withH){sec=Math.max(0,Math.floor(sec));var h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return(h>0?h+':'+p2(m):m)+':'+p2(s)}
+function esc(s){return String(s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function sortSlots(e){e.slots.sort(function(a,b){return ms(a.start)-ms(b.start)})}
+function initCur(e){sortSlots(e);var n=Date.now();for(var i=0;i<e.slots.length;i++){if(ms(e.slots[i].end)>n){e.cur=i;return}}e.cur=Math.max(0,e.slots.length-1)}
+initCur(cev());
+
+var SG={0:'abcdef',1:'bc',2:'abdeg',3:'abcdg',4:'bcfg',5:'acdfg',6:'acdefg',7:'abc',8:'abcdefg',9:'abcdfg'};
+var PG={a:'8,4 12,0 48,0 52,4 48,8 12,8',b:'52,10 56,6 60,10 60,44 56,48 52,44',c:'52,56 56,52 60,56 60,90 56,94 52,90',d:'8,96 12,92 48,92 52,96 48,100 12,100',e:'0,56 4,52 8,56 8,90 4,94 0,90',f:'0,10 4,6 8,10 8,44 4,48 0,44',g:'8,50 12,46 48,46 52,50 48,54 12,54'};
+function sg(str){str=String(str);var h='<span class="sg" role="img" aria-label="'+esc(str)+'">';
+  for(var i=0;i<str.length;i++){var c=str.charAt(i);
+    if(SG[c]!==undefined){h+='<svg viewBox="0 0 60 100" style="width:.6em" aria-hidden="true">';'abcdefg'.split('').forEach(function(k){h+='<polygon points="'+PG[k]+'" fill="currentColor"'+(SG[c].indexOf(k)<0?' opacity=".1"':'')+'/>'});h+='</svg>'}
+    else if(c===':')h+='<svg viewBox="0 0 20 100" style="width:.22em" aria-hidden="true"><rect x="5" y="26" width="10" height="10" fill="currentColor"/><rect x="5" y="64" width="10" height="10" fill="currentColor"/></svg>';
+    else if(c==='+')h+='<svg viewBox="0 0 60 100" style="width:.6em" aria-hidden="true"><polygon points="'+PG.g+'" fill="currentColor"/><rect x="26" y="26" width="8" height="48" fill="currentColor"/></svg>';
+    else if(c==='—'||c==='-')h+='<svg viewBox="0 0 60 100" style="width:.6em" aria-hidden="true"><polygon points="'+PG.g+'" fill="currentColor"/></svg>';
+    else h+='<span class="t">'+esc(c)+'</span>'}
+  return h+'</span>'}
+var lastLv='';
+function lv(cls){if(cls!==lastLv){lastLv=cls;if(S.set.vib&&navigator.vibrate&&(cls==='s-y'||cls==='s-o'||cls==='s-r'))try{navigator.vibrate(200)}catch(e){}}}
+
+function tick(){
+  var now=Date.now(),e=cev(),d=new Date(now);
+  $('clock').innerHTML=sg(p2(d.getHours())+':'+p2(d.getMinutes())+(S.set.sec?':'+p2(d.getSeconds()):''));
+  $('evn').textContent=e.name;$('dt').textContent=d.getFullYear()+'.'+p2(d.getMonth()+1)+'.'+p2(d.getDate())+' '+['SUN','MON','TUE','WED','THU','FRI','SAT'][d.getDay()];
+  var sl=e.slots,s=sl[e.cur],n=sl[e.cur+1];
+  var rem=$('rem'),dj=$('dj'),nx=$('next'),bn=$('banner'),cls='s-d',txt='--',name='',nt='',pct=0,meta='',remSec=9e9;
+  var banner=false;
+  if(!s){name='タイムテーブル未登録';txt='—';nt='「編集・設定」から枠を追加'}
+  else{
+    var st=ms(s.start),en=ms(s.end);
+    if(now>=en&&n&&now>=ms(n.start)&&(S.set.auto!==false||ms(n.start)>en)){e.cur++;save();return tick()}
+    name=s.dj;
+    if(now<st){meta=hm(st)+' → '+hm(en);txt=dur((st-now)/1000);cls='s-d';nt='開始 '+hm(st)+'(開始まで)'}
+    else if(now<en){var r=(en-now)/1000;pct=(now-st)/(en-st);remSec=r;meta=hm(st)+' → '+hm(en);txt=dur(r);cls=r<=S.set.w2*60?'s-o':r<=S.set.w1*60?'s-y':'s-ok';nt=n?'次: '+n.dj+' '+hm(ms(n.start)):'次: なし'}
+    else{
+      if(!n){txt='終了';cls='s-d';nt='次: なし'}
+      else if(ms(n.start)<=en){txt='+'+dur((now-en)/1000);cls='s-r';pct=1;meta=hm(st)+' → '+hm(en);banner=true;nt='次: '+n.dj+' '+hm(ms(n.start))}
+      else{name='転換';txt=dur((ms(n.start)-now)/1000);cls='s-d';nt='次: '+n.dj+' '+hm(ms(n.start))+'(開始まで)'}
+    }
+  }
+  rem.className=cls;rem.innerHTML=sg(txt);dj.textContent=name;$('pgi').style.width=(Math.max(0,Math.min(1,pct))*100)+'%';$('pgi').className=cls;$('meta').textContent=meta;rem.classList.toggle('bk',!!S.set.blk&&remSec>0&&remSec<=180);nx.textContent=nt;bn.style.display=banner?'block':'none';lv(cls);
+}
+setInterval(tick,250);
+
+function shift(){var e=cev(),n=e.slots[e.cur+1];return n}
+$('bNext').onclick=function(){var e=cev();if(e.cur<e.slots.length-1){e.cur++;save();tick()}};
+$('bPrev').onclick=function(){var e=cev();if(e.cur>0){e.cur--;save();tick()}};
+function adj(m){var n=shift();if(!n)return;var t=ms(n.start)+m*60000;if(t>=ms(n.end))return;n.start=toStr(t);save();tick()}
+$('bM').onclick=function(){adj(-1)};$('bP').onclick=function(){adj(1)};
+
+/* ロック */
+var lt=null,ls=0,lraf=0;
+function lockOn(){$('lock').style.display='block'}
+function lockOff(){$('lock').style.display='none';$('lp').style.width='0'}
+$('bLock').onclick=lockOn;
+function lpStart(ev){ev.preventDefault();ls=Date.now();clearTimeout(lt);lt=setTimeout(function(){lockOff();cancelAnimationFrame(lraf)},2000);(function f(){var w=Math.min(1,(Date.now()-ls)/2000);$('lp').style.width=w*100+'%';if(lt)lraf=requestAnimationFrame(f)})()}
+function lpEnd(){clearTimeout(lt);lt=null;cancelAnimationFrame(lraf);$('lp').style.width='0'}
+var L=$('lock');['pointerdown'].forEach(function(t){L.addEventListener(t,lpStart)});
+['pointerup','pointercancel','pointerleave'].forEach(function(t){L.addEventListener(t,lpEnd)});
+L.addEventListener('contextmenu',function(e){e.preventDefault()});
+
+/* 3回タップでボタン表示 */
+var taps=0,tt=null,hb=null;
+function barShow(on){document.body.classList.toggle('showbar',on);clearTimeout(hb);if(on)hb=setTimeout(function(){barShow(false)},12000)}
+$('app').addEventListener('pointerup',function(ev){if(ev.target.closest('button'))return;taps++;clearTimeout(tt);tt=setTimeout(function(){taps=0},700);if(taps>=3){taps=0;barShow(!document.body.classList.contains('showbar'))}});
+$('bar').addEventListener('pointerdown',function(){if(document.body.classList.contains('showbar'))barShow(true)});
+
+/* 全画面 */
+function fsEl(){return document.fullscreenElement||document.webkitFullscreenElement}
+function fsLabel(){$('bFs').textContent=fsEl()?'全画面解除':'全画面'}
+$('bFs').onclick=function(){
+  var el=document.documentElement;
+  try{
+    if(fsEl()){(document.exitFullscreen||document.webkitExitFullscreen).call(document);return}
+    var rq=el.requestFullscreen||el.webkitRequestFullscreen;
+    if(!rq){$('wk').textContent='全画面: このブラウザは非対応です';return}
+    var p=rq.call(el);
+    if(p&&p.catch)p.catch(function(){$('wk').textContent='全画面: 開始できませんでした(埋め込み表示では制限される場合があります)'})
+  }catch(e){$('wk').textContent='全画面: 開始できませんでした'}
+};
+document.addEventListener('fullscreenchange',fsLabel);document.addEventListener('webkitfullscreenchange',fsLabel);
+
+/* 画面維持 */
+var wl=null;
+function wake(){
+  try{
+    if(!('wakeLock' in navigator)){$('wk').textContent='画面維持: このブラウザは非対応(端末の自動ロックを「なし」に設定してください)';return}
+    navigator.wakeLock.request('screen').then(function(l){wl=l;$('wk').textContent='画面維持: 有効';l.addEventListener('release',function(){$('wk').textContent='画面維持: 解除されました(画面タップで再取得)'})}).catch(function(){$('wk').textContent='画面維持: 取得失敗(端末の自動ロックを「なし」に設定してください)'})
+  }catch(e){$('wk').textContent='画面維持: 取得失敗'}
+}
+document.addEventListener('pointerdown',function(){if(!wl||wl.released)wake()},{passive:true});
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')wake()});
+wake();
+
+/* 編集・設定 */
+var ed=$('ed');
+function slotHtml(s,i){return '<div class="slot"><input type="text" data-k="dj" data-i="'+i+'" value="'+esc(s.dj)+'" placeholder="DJ名" aria-label="DJ名">'+
+ '<div class="row"><label>開始 <input type="datetime-local" data-k="start" data-i="'+i+'" value="'+s.start+'"></label>'+
+ '<label>終了 <input type="datetime-local" data-k="end" data-i="'+i+'" value="'+s.end+'"></label>'+
+ '<button data-a="del" data-i="'+i+'">削除</button></div></div>'}
+function exportTxt(e){return e.slots.map(function(s){return s.dj+'|'+s.start.replace('T',' ')+'|'+s.end.replace('T',' ')}).join('\n')}
+function render(){
+  var GEN_DEF=['Mee Imai|10','DJ Boom|10','Na0|20','なみぽ|30','JINTAN|30','眼球の後ろ|30','Mee Imai|10','Na0|20','Cue|30','DJ Boom|10','たいらい|30','Na0|30','Guest2|40'].join('\n'),e=cev(),h='';
+  h+='<div class="row"><button data-a="close">閉じる</button></div>';
+  h+='<h2>イベント</h2><div class="row"><select id="evSel" aria-label="イベント選択">'+S.ev.map(function(x){return '<option value="'+x.id+'"'+(x.id===S.evId?' selected':'')+'>'+esc(x.name)+'</option>'}).join('')+'</select>'+
+     '<button data-a="evNew">新規</button><button data-a="evDel">このイベントを削除</button></div>';
+  h+='<div class="row"><input type="text" id="evName" value="'+esc(e.name)+'" aria-label="イベント名"></div>';
+  h+='<h2>タイムテーブル</h2>'+(e.slots.length?e.slots.map(slotHtml).join(''):'<div class="err" style="color:var(--dim)">枠がありません。「枠を追加」で登録してください。</div>');
+  h+='<div class="row"><button data-a="add">枠を追加</button></div>';
+  h+='<h2>警告・表示</h2><div class="row"><label>黄になる残り(分) <input type="number" min="1" max="60" id="w1" value="'+S.set.w1+'" style="width:70px"></label>'+
+     '<label>橙になる残り(分) <input type="number" min="1" max="60" id="w2" value="'+S.set.w2+'" style="width:70px"></label></div>'+
+     '<div class="row"><label><input type="checkbox" id="sec"'+(S.set.sec?' checked':'')+'> 秒を表示</label> <label><input type="checkbox" id="vib"'+(S.set.vib?' checked':'')+'> 警告時に振動</label> <label><input type="checkbox" id="auto"'+(S.set.auto!==false?' checked':'')+'> 連続枠は自動で切替</label> <label><input type="checkbox" id="blk"'+(S.set.blk?' checked':'')+'> 残り3分以下で点滅</label></div>';
+  h+='<h2>持ち時間から一括作成</h2><div style="color:var(--dim);font-size:13px">開始日時から、各枠の持ち時間(分)で連続した枠を作ります。形式: DJ名|分(1行1枠)。現在の枠は置き換わります。</div>'+
+     '<div class="row"><label>開始 <input type="datetime-local" id="gStart" value="2027-03-07T12:00"></label></div>'+
+     '<textarea id="gTxt" aria-label="持ち時間リスト">'+esc(GEN_DEF)+'</textarea>'+
+     '<div class="row"><button data-a="gen">この内容で作成</button></div><div class="err" id="gErr"></div>';
+  h+='<h2>書き出し・読み込み</h2><div style="color:var(--dim);font-size:13px">形式: DJ名|YYYY-MM-DD HH:mm|YYYY-MM-DD HH:mm(1行1枠)。DJ名に「|」は使えません。</div>'+
+     '<textarea id="io" aria-label="書き出し・読み込み用テキスト">'+esc(exportTxt(e))+'</textarea>'+
+     '<div class="row"><button data-a="imp">この内容で読み込む</button></div><div class="err" id="ioErr"></div>';
+  ed.innerHTML=h;
+}
+function openEd(){render();ed.style.display='block'}
+function closeEd(){ed.style.display='none';var e=cev();sortSlots(e);initCur(e);save();tick()}
+$('bEd').onclick=openEd;
+function valid(str){return /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}$/.test(str)&&!isNaN(ms(str.replace(' ','T')))}
+function doGen(){
+  var st=$('gStart').value,errs=[],out=[];
+  if(!valid(st))errs.push('開始日時を入力してください');
+  var t=valid(st)?ms(st):0;
+  $('gTxt').value.split('\n').forEach(function(raw,i){var l=raw.trim();if(!l)return;var p=l.split('|'),m=Number((p[1]||'').trim());
+    if(p.length!==2||!p[0].trim()||!(m>=1&&m<=600)||Math.floor(m)!==m){errs.push((i+1)+'行目: 「DJ名|分(1〜600の整数)」で入力してください');return}
+    out.push({dj:p[0].trim(),m:m})});
+  if(!out.length&&!errs.length)errs.push('枠がありません');
+  if(errs.length){$('gErr').textContent=errs.join('\n');return}
+  if(!confirm('現在のタイムテーブルを置き換えます。よろしいですか?'))return;
+  var e=cev();e.slots=out.map(function(o){var s=toStr(t);t+=o.m*60000;return{dj:o.dj,start:s,end:toStr(t)}});initCur(e);save();render();
+}
+function doImport(){
+  var lines=$('io').value.split('\n'),out=[],errs=[];
+  lines.forEach(function(raw,i){var l=raw.trim();if(!l)return;var p=l.split('|');
+    if(p.length!==3){errs.push((i+1)+'行目: 「DJ名|開始|終了」の3項目で入力してください');return}
+    var dj=p[0].trim(),a=p[1].trim(),b=p[2].trim();
+    if(!dj){errs.push((i+1)+'行目: DJ名が空です');return}
+    if(!valid(a)||!valid(b)){errs.push((i+1)+'行目: 日時は YYYY-MM-DD HH:mm の形式で入力してください');return}
+    a=a.replace(' ','T');b=b.replace(' ','T');
+    if(ms(b)<=ms(a)){errs.push((i+1)+'行目: 終了が開始より前(または同時刻)です');return}
+    out.push({dj:dj,start:a,end:b,line:i+1})});
+  out.sort(function(x,y){return ms(x.start)-ms(y.start)});
+  for(var k=1;k<out.length;k++)if(ms(out[k].start)<ms(out[k-1].end))errs.push(out[k].line+'行目: 前の枠('+out[k-1].line+'行目)と時間が重なっています');
+  if(errs.length){$('ioErr').textContent=errs.join('\n');return}
+  if(!confirm('現在のタイムテーブルを上書きして読み込みます。よろしいですか?'))return;
+  var e=cev();e.slots=out.map(function(o){return{dj:o.dj,start:o.start,end:o.end}});initCur(e);save();render();
+}
+ed.addEventListener('click',function(ev){
+  var b=ev.target.closest('button');if(!b)return;var a=b.getAttribute('data-a'),e=cev(),i=+b.getAttribute('data-i');
+  if(a==='close')closeEd();
+  else if(a==='add'){var last=e.slots[e.slots.length-1],st=last?ms(last.end):Math.ceil(Date.now()/600000)*600000;e.slots.push({dj:'',start:toStr(st),end:toStr(st+3600000)});save();render()}
+  else if(a==='del'){e.slots.splice(i,1);save();render()}
+  else if(a==='evNew'){var id=Date.now();S.ev.push({id:id,name:'イベント'+(S.ev.length+1),cur:0,slots:[]});S.evId=id;save();render()}
+  else if(a==='evDel'){if(S.ev.length<2){alert('最後の1件は削除できません');return}if(confirm('「'+e.name+'」を削除します。よろしいですか?')){S.ev=S.ev.filter(function(x){return x.id!==e.id});S.evId=S.ev[0].id;save();render()}}
+  else if(a==='gen')doGen();
+  else if(a==='imp')doImport();
+});
+ed.addEventListener('change',function(ev){
+  var t=ev.target,e=cev();
+  if(t.id==='evSel'){S.evId=+t.value;initCur(cev());save();render();return}
+  if(t.id==='evName'){e.name=t.value||e.name;save();return}
+  if(t.id==='w1'||t.id==='w2'){var v=Math.max(1,Math.min(60,parseInt(t.value,10)||1));S.set[t.id]=v;if(S.set.w2>S.set.w1){S.set.w2=S.set.w1}save();render();return}
+  if(t.id==='sec'){S.set.sec=t.checked;save();return}
+  if(t.id==='vib'){S.set.vib=t.checked;save();return}
+  if(t.id==='auto'){S.set.auto=t.checked;save();return}
+  if(t.id==='blk'){S.set.blk=t.checked;save();return}
+  var k=t.getAttribute('data-k');if(!k)return;var i=+t.getAttribute('data-i'),s=e.slots[i];if(!s)return;
+  if(k==='dj'){s.dj=t.value.replace(/\|/g,'')}
+  else if(t.value){var old=s[k];s[k]=t.value;if(ms(s.end)<=ms(s.start)){s[k]=old;alert('終了は開始より後にしてください');t.value=old}}
+  save();
+});
+tick();
+})();
+</script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}
+</script>
+</body>
+</html>
