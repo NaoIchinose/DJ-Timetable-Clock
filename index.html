@@ -213,7 +213,14 @@ function render(){
   h+='<h2>警告・表示</h2><div class="row"><label>黄になる残り(分) <input type="number" min="1" max="60" id="w1" value="'+S.set.w1+'" style="width:70px"></label>'+
      '<label>橙になる残り(分) <input type="number" min="1" max="60" id="w2" value="'+S.set.w2+'" style="width:70px"></label></div>'+
      '<div class="row"><label><input type="checkbox" id="sec"'+(S.set.sec?' checked':'')+'> 秒を表示</label> <label><input type="checkbox" id="vib"'+(S.set.vib?' checked':'')+'> 警告時に振動</label> <label><input type="checkbox" id="auto"'+(S.set.auto!==false?' checked':'')+'> 連続枠は自動で切替</label> <label><input type="checkbox" id="blk"'+(S.set.blk?' checked':'')+'> 残り3分以下で点滅</label></div>';
-  h+='<h2>持ち時間から一括作成</h2><div style="color:var(--dim);font-size:13px">開始日時から、各枠の持ち時間(分)で連続した枠を作ります。形式: DJ名|分(1行1枠)。現在の枠は置き換わります。</div>'+
+  h+='<h2>共有</h2><div style="color:var(--dim);font-size:13px">現在のタイムテーブルをリンクにして、他の端末に送れます。受け取った人は、リンクを開くか、下の欄に貼り付けて取り込みます(新しいイベントとして追加されます)。</div>'+
+     '<div class="row"><button data-a="shareMk">共有リンクを作る</button><button data-a="shareCp">コピー</button><button data-a="shareSend">共有メニュー</button></div>'+
+     '<textarea id="shUrl" readonly aria-label="共有リンク" style="height:70px"></textarea>'+
+     '<div style="color:var(--dim);font-size:13px;margin-top:8px">受け取ったリンク(または共有コード)を貼り付け:</div>'+
+     '<textarea id="shIn" aria-label="受け取ったリンクを貼り付け" style="height:70px"></textarea>'+
+     '<div class="row"><button data-a="shareIn">取り込む</button></div><div class="err" id="shErr"></div>';
+  
+h+='<h2>持ち時間から一括作成</h2><div style="color:var(--dim);font-size:13px">開始日時から、各枠の持ち時間(分)で連続した枠を作ります。形式: DJ名|分(1行1枠)。現在の枠は置き換わります。</div>'+
      '<div class="row"><label>開始 <input type="datetime-local" id="gStart" value="2027-03-07T12:00"></label></div>'+
      '<textarea id="gTxt" aria-label="持ち時間リスト">'+esc(GEN_DEF)+'</textarea>'+
      '<div class="row"><button data-a="gen">この内容で作成</button></div><div class="err" id="gErr"></div>';
@@ -226,6 +233,49 @@ function openEd(){render();ed.style.display='block'}
 function closeEd(){ed.style.display='none';var e=cev();sortSlots(e);initCur(e);save();tick()}
 $('bEd').onclick=openEd;
 function valid(str){return /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}$/.test(str)&&!isNaN(ms(str.replace(' ','T')))}
+function enc(e){var o={n:e.name,s:e.slots.map(function(s){return[s.dj,s.start,s.end]})};return btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function dec(c){c=c.replace(/-/g,'+').replace(/_/g,'/');while(c.length%4)c+='=';return JSON.parse(decodeURIComponent(escape(atob(c))))}
+function shareUrl(e){return location.href.split('#')[0]+'#t='+enc(e)}
+function importShared(code){
+  if(!code||code.length>20000)return '共有コードが正しくありません';
+  var o;try{o=dec(code)}catch(x){return '共有コードを読み取れませんでした'}
+  if(!o||!Array.isArray(o.s)||!o.s.length||o.s.length>200)return '共有コードの内容が正しくありません';
+  var slots=[];
+  for(var i=0;i<o.s.length;i++){
+    var a=o.s[i];
+    if(!Array.isArray(a)||a.length!==3||typeof a[0]!=='string'||!a[0].trim()||a[0].length>80||typeof a[1]!=='string'||typeof a[2]!=='string'||!valid(a[1])||!valid(a[2]))return (i+1)+'枠目の内容が正しくありません';
+    var st=a[1].replace(' ','T'),en=a[2].replace(' ','T');
+    if(ms(en)<=ms(st))return (i+1)+'枠目: 終了が開始より前です';
+    slots.push({dj:a[0].replace(/\|/g,'').trim(),start:st,end:en});
+  }
+  slots.sort(function(x,y){return ms(x.start)-ms(y.start)});
+  for(var k=1;k<slots.length;k++)if(ms(slots[k].start)<ms(slots[k-1].end))return '枠の時間が重なっています';
+  var name=(typeof o.n==='string'&&o.n.trim())?o.n.trim().slice(0,60):'共有イベント';
+  if(!confirm('共有されたタイムテーブル「'+name+'」('+slots.length+'枠)を、新しいイベントとして追加します。よろしいですか?'))return 'キャンセルしました';
+  var id=Date.now();S.ev.push({id:id,name:name,cur:0,slots:slots});S.evId=id;initCur(cev());save();tick();
+  return '';
+}
+function shareAct(a){
+  var e=cev(),ta=$('shUrl'),er=$('shErr');
+  if(a==='shareMk'){
+    if(!e.slots.length){er.textContent='枠がありません';return}
+    ta.value=shareUrl(e);er.textContent='共有リンクを作りました('+ta.value.length+'文字)';
+  }else if(a==='shareCp'){
+    if(!ta.value){er.textContent='先に「共有リンクを作る」を押してください';return}
+    var fb=function(){ta.focus();ta.select();try{document.execCommand('copy');er.textContent='コピーしました'}catch(x){er.textContent='選択された文字を手動でコピーしてください'}};
+    try{navigator.clipboard.writeText(ta.value).then(function(){er.textContent='コピーしました'},fb)}catch(x){fb()}
+  }else if(a==='shareSend'){
+    if(!ta.value){er.textContent='先に「共有リンクを作る」を押してください';return}
+    if(navigator.share){navigator.share({title:e.name,text:e.name+' のタイムテーブル',url:ta.value}).catch(function(){})}
+    else er.textContent='この端末は共有メニューに非対応です。「コピー」を使ってください';
+  }else if(a==='shareIn'){
+    var v=$('shIn').value.trim();
+    if(!v){er.textContent='リンクまたは共有コードを貼り付けてください';return}
+    var i=v.indexOf('#t='),code=(i>=0?v.slice(i+3):v.replace(/^t=/,'')).replace(/\s+/g,'');
+    var m=importShared(code);
+    if(m===''){render();$('shErr').textContent='取り込みました(新しいイベントとして追加)'}else er.textContent=m;
+  }
+}
 function doGen(){
   var st=$('gStart').value,errs=[],out=[];
   if(!valid(st))errs.push('開始日時を入力してください');
@@ -261,6 +311,7 @@ ed.addEventListener('click',function(ev){
   else if(a==='del'){e.slots.splice(i,1);save();render()}
   else if(a==='evNew'){var id=Date.now();S.ev.push({id:id,name:'イベント'+(S.ev.length+1),cur:0,slots:[]});S.evId=id;save();render()}
   else if(a==='evDel'){if(S.ev.length<2){alert('最後の1件は削除できません');return}if(confirm('「'+e.name+'」を削除します。よろしいですか?')){S.ev=S.ev.filter(function(x){return x.id!==e.id});S.evId=S.ev[0].id;save();render()}}
+  else if(a.indexOf('share')===0)shareAct(a);
   else if(a==='gen')doGen();
   else if(a==='imp')doImport();
 });
@@ -278,6 +329,16 @@ ed.addEventListener('change',function(ev){
   else if(t.value){var old=s[k];s[k]=t.value;if(ms(s.end)<=ms(s.start)){s[k]=old;alert('終了は開始より後にしてください');t.value=old}}
   save();
 });
+function checkHash(){
+  var h=location.hash;
+  if(h.indexOf('#t=')!==0)return;
+  var code=h.slice(3);
+  try{history.replaceState(null,'',location.pathname+location.search)}catch(x){}
+  var m=importShared(code);
+  if(m&&m!=='キャンセルしました')alert(m);
+}
+checkHash();
+window.addEventListener('hashchange',checkHash);
 tick();
 })();
 </script>

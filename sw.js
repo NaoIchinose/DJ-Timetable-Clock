@@ -1,5 +1,5 @@
 // DJブース時計 Service Worker: オフライン起動用。更新時は CACHE のバージョンを上げる
-var CACHE='djclock-v1';
+var CACHE='djclock-v2';
 var CORE=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',function(e){
   e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(CORE)}).then(function(){return self.skipWaiting()}));
